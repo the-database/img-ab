@@ -127,7 +127,12 @@
           </tr>
         </tbody>
       </table>
-      <img id="image" ref="image" :style="{height: `${this?.$refs.image?.naturalHeight * scalingFactor}px`}" :src="allImages[selectedImageIndex]" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }" /></div></main></template>
+      <img v-if="allImages.length > 0" id="image" ref="image" :style="{height: `${this?.$refs.image?.naturalHeight * scalingFactor}px`}" :src="allImages[selectedImageIndex]" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }" />
+      <p class="none-message" v-else>No images loaded.</p>
+    </div>
+  </main>
+</template>
+
 
 <style scoped>
   .image-container .info {
@@ -184,5 +189,9 @@
     image-rendering: optimizeQuality;
     display: block;
     cursor: grab;
+  }
+
+  .none-message {
+    padding: 1rem;
   }
 </style>
