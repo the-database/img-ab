@@ -4,6 +4,10 @@ body::-webkit-scrollbar {
   display: none;
 }
 
+body {
+  cursor: grab;
+}
+
 #app {
   margin: 0 auto;
   padding: 0;
