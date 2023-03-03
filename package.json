@@ -1,0 +1,32 @@
+{
+  "name": "img-ab",
+  "version": "0.0.1",
+  "main": "main.js",
+  "author": {"name": "the-database"},
+  "description": "Bare-bones desktop image A/B comparison tool.",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:start": "electron . ",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "dependencies": {
+    "dragscroll": "^0.0.8",
+    "electron-squirrel-startup": "^1.0.0",
+    "vue": "^3.2.47"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.5",
+    "@electron-forge/maker-deb": "^6.0.5",
+    "@electron-forge/maker-rpm": "^6.0.5",
+    "@electron-forge/maker-squirrel": "^6.0.5",
+    "@electron-forge/maker-zip": "^6.0.5",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "electron": "^23.1.1",
+    "vite": "^4.1.4"
+  }
+}
