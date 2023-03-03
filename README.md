@@ -7,3 +7,5 @@ img-ab.exe image1.png image2.png ...
 ```
 
 Or select several images and drag and drop onto `img-ab.exe`. 
+
+Press `h` to view keybindings. 
