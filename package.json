@@ -2,7 +2,9 @@
   "name": "img-ab",
   "version": "0.0.1",
   "main": "main.js",
-  "author": {"name": "the-database"},
+  "author": {
+    "name": "the-database"
+  },
   "description": "Bare-bones desktop image A/B comparison tool.",
   "private": true,
   "scripts": {
@@ -15,8 +17,8 @@
     "make": "electron-forge make"
   },
   "dependencies": {
-    "dragscroll": "^0.0.8",
     "electron-squirrel-startup": "^1.0.0",
+    "panzoom": "^9.4.3",
     "vue": "^3.2.47"
   },
   "devDependencies": {
