@@ -17,8 +17,8 @@
     "make": "electron-forge make"
   },
   "dependencies": {
+    "dragscroll": "^0.0.8",
     "electron-squirrel-startup": "^1.0.0",
-    "inertia-drag": "^0.2.0",
     "panzoom": "^9.4.3",
     "vue": "^3.2.47"
   },

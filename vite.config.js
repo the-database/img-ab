@@ -7,6 +7,10 @@ const path = require("path");
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "./",
+  // base: "/" + path.resolve(__dirname, "./dist/"),
+  // build: {
+  //   minify: false,
+  // },
   plugins: [vue()],
   resolve: {
     alias: {
