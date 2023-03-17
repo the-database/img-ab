@@ -3,9 +3,9 @@
   import * as createPanZoom from './panzoom';
 
   const allImages = ref([
-    'https://i.slow.pics/bmnXcYVG.png',
-    'https://i.slow.pics/hcGpSScN.png',
-    'https://i.slow.pics/ZeuCLk82.png',
+    // 'https://i.slow.pics/bmnXcYVG.png',
+    // 'https://i.slow.pics/hcGpSScN.png',
+    // 'https://i.slow.pics/ZeuCLk82.png',
   ]);
 
   const image = ref(null);
@@ -23,9 +23,6 @@
   const modeFitToHeight = ref(false);
   const scalingFactor = ref(1.0);
 
-  const scaledWidth = computed(() => image.value?.naturalWidth);
-  const scaledHeight = computed(() => image.value?.naturalHeight);
-
   let panzoomInstance = null;
 
   watch(image, ( newValue, oldValue ) => {
@@ -36,7 +33,7 @@
         boundsPadding: 1,
         zoomDoubleClickSpeed: 1,
         maxZoom: 50,
-        minZoom: 0.1,
+        minZoom: 1,
         beforeWheel: function(e) {
           // return true;
         }
@@ -223,9 +220,7 @@
   }
 
   img.scale {
-    /* transform: scale(v-bind(scalingFactor)); */
     transform-origin: center;
-    
   }
 
   table, tbody, tr, td {
@@ -236,7 +231,6 @@
   .image-container img {
     image-rendering: v-bind(imageRendering);
     display: block;
-    cursor: grab;
   }
 
   .none-message {
@@ -246,5 +240,7 @@
   .image-container {
     width: 100vw;
     height: 100vh;
+    cursor: grab;
+    overflow: hidden;
   }
 </style>
