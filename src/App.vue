@@ -1,6 +1,6 @@
 <script setup>
   import { ref, computed, onMounted, watch } from 'vue';
-  import * as createPanZoom from './panzoom';
+  import panzoom from 'panzoom';
 
   const allImages = ref([
     // 'https://i.slow.pics/bmnXcYVG.png',
