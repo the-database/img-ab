@@ -1,16 +1,20 @@
 <script setup>
-  import { ref, computed, onMounted, defineExpose } from 'vue';
-  import dragscroll from 'dragscroll';
+  import { ref, computed, onMounted, watch } from 'vue';
+  import * as createPanZoom from './panzoom';
 
   const allImages = ref([
-    // 'https://i.slow.pics/bmnXcYVG.png',
-    // 'https://i.slow.pics/hcGpSScN.png',
-    // 'https://i.slow.pics/ZeuCLk82.png',
+    'https://i.slow.pics/bmnXcYVG.png',
+    'https://i.slow.pics/hcGpSScN.png',
+    'https://i.slow.pics/ZeuCLk82.png',
   ]);
 
   const image = ref(null);
+  const imageContainer = ref(null);
 
   const selectedImageIndex = ref(0);
+
+  const nearestNeighborSampling = ref(false);
+  const imageRendering = computed(() => nearestNeighborSampling.value ? 'pixelated' : 'optimizeQuality');
 
   const showInfo = ref(false);
   const showHelp = ref(false);
@@ -22,6 +26,26 @@
   const scaledWidth = computed(() => image.value?.naturalWidth);
   const scaledHeight = computed(() => image.value?.naturalHeight);
 
+  let panzoomInstance = null;
+
+  watch(image, ( newValue, oldValue ) => {
+    console.log('watch image?', image.value)
+    if (image.value) {
+      panzoomInstance = panzoom(image.value, {
+        bounds: true,
+        boundsPadding: 1,
+        zoomDoubleClickSpeed: 1,
+        maxZoom: 50,
+        minZoom: 0.1,
+        beforeWheel: function(e) {
+          // return true;
+        }
+      });
+    }
+  }, {
+    immediate: true,
+  });
+
   onMounted(() => {
     window.addEventListener('keydown', (e) => {
       console.log("keydown", e.key);
@@ -31,6 +55,8 @@
           selectedImageIndex.value = numberPressed - 1;
         }
       }
+
+      let transform;
 
       switch (e.key) {
         case "ArrowLeft":
@@ -51,28 +77,45 @@
         case "h":
           showHelp.value = !showHelp.value;
           break;
-        case "q":
-          scalingFactor.value = 1.0;
+          case "q":
           modeFitToHeight.value = false;
           modeFitToWidth.value = false;
+          panzoomInstance.pause();
+          panzoomInstance.resume();
+          transform = panzoomInstance.getTransform();
+          panzoomInstance.moveTo(0, 0);
+          panzoomInstance.zoomAbs(0, 0, 1);
           break;
         case "w":
-          scalingFactor.value *= 2/3.0;
           modeFitToHeight.value = false;
           modeFitToWidth.value = false;
+          panzoomInstance.resume();
+          transform = panzoomInstance.getTransform();
+          panzoomInstance.zoomTo(transform.x, transform.y, 2/3);
           break;
         case "e":
-          scalingFactor.value *= 1.5;
           modeFitToHeight.value = false;
           modeFitToWidth.value = false;
+          
+          transform = panzoomInstance.getTransform();
+          panzoomInstance.zoomTo(transform.x + window.innerWidth/4, transform.y + window.innerHeight/4, 1.5);
           break;
         case "r":
+          panzoomInstance.moveTo(0, 0);
+          panzoomInstance.zoomAbs(0, 0, 1);
+          panzoomInstance.pause();
           modeFitToWidth.value = true;
           modeFitToHeight.value = false;
           break;
         case "t":
+          panzoomInstance.moveTo(0, 0);
+          panzoomInstance.zoomAbs(0, 0, 1);
+          panzoomInstance.pause();
           modeFitToHeight.value = true;
           modeFitToWidth.value = false;
+          break;
+        case "y":
+          nearestNeighborSampling.value = !nearestNeighborSampling.value;
           break;
       }
     });
@@ -86,7 +129,7 @@
 
 <template>
   <main>
-    <div class="image-container">
+    <div class="image-container" ref="imageContainer">
       <span class="info" v-show="showInfo">
         {{ selectedImageIndex+1 }}/{{ allImages.length }}: {{  allImages[selectedImageIndex] }}
         <span v-show="!modeFitToHeight && !modeFitToWidth">Zoom={{ Math.floor(scalingFactor * 100) }}%</span>
@@ -127,7 +170,12 @@
           </tr>
         </tbody>
       </table>
-      <img v-if="allImages.length > 0" id="image" ref="image" :style="{height: `${this?.$refs.image?.naturalHeight * scalingFactor}px`}" :src="allImages[selectedImageIndex]" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }" />
+      
+        
+      <img v-if="allImages.length > 0" id="image" ref="image"  :src="allImages[selectedImageIndex]" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }" />
+          
+        
+      
       <p class="none-message" v-else>No images loaded.</p>
     </div>
   </main>
@@ -175,8 +223,8 @@
   }
 
   img.scale {
-    transform: scale(v-bind(scalingFactor));
-    transform-origin: top left;
+    /* transform: scale(v-bind(scalingFactor)); */
+    transform-origin: center;
     
   }
 
@@ -186,12 +234,17 @@
   }
 
   .image-container img {
-    image-rendering: optimizeQuality;
+    image-rendering: v-bind(imageRendering);
     display: block;
     cursor: grab;
   }
 
   .none-message {
     padding: 1rem;
+  }
+
+  .image-container {
+    width: 100vw;
+    height: 100vh;
   }
 </style>
