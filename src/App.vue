@@ -2,13 +2,10 @@
   import { ref, computed, onMounted, watch } from 'vue';
   import panzoom from 'panzoom';
 
-  const allImages = ref([
-    // 'https://i.slow.pics/bmnXcYVG.png',
-    // 'https://i.slow.pics/hcGpSScN.png',
-    // 'https://i.slow.pics/ZeuCLk82.png',
-  ]);
+  const allImages = ref([]);
 
   const image = ref(null);
+  const hiddenImages = ref(null);
   const imageContainer = ref(null);
 
   const selectedImageIndex = ref(0);
@@ -25,9 +22,15 @@
 
   let panzoomInstance = null;
 
+  const maximumImageHeight = ref(0);
+  const maximumImageHeightPx = computed(() => `${maximumImageHeight.value}px`);
+
   watch(image, ( newValue, oldValue ) => {
-    console.log('watch image?', image.value)
+
     if (image.value) {
+
+      image.value.ondragstart = function() { return false; }; // TODO ???
+
       panzoomInstance = panzoom(image.value, {
         bounds: true,
         boundsPadding: 1,
@@ -43,7 +46,45 @@
     immediate: true,
   });
 
+  watch(hiddenImages, ( newValue, oldValue ) => {
+
+    if (hiddenImages.value) {
+
+      hiddenImages.value.forEach(img => {
+        img.onload = () => {
+          console.log('onload!!!', img)
+          if (img.naturalHeight > maximumImageHeight.value) {
+            maximumImageHeight.value = img.naturalHeight;
+          }
+        }
+      });
+    }
+  }, {
+    immediate: true,
+  });
+
   onMounted(() => {
+
+    document.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    document.addEventListener('drop', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      let pathArr = [];
+      for (const f of event.dataTransfer.files) {
+          // Using the path attribute to get absolute file path
+          console.log('File Path of dragged files: ', f.path)
+          pathArr.push(f.path); // assemble array for main.js
+      }
+      console.log(pathArr);
+      const ret = window.ipcRenderer?.handleDragAndDrop(pathArr);
+      console.log(ret);
+    });
+
     window.addEventListener('keydown', (e) => {
       console.log("keydown", e.key);
       if (isFinite(e.key)) {
@@ -88,14 +129,14 @@
           modeFitToWidth.value = false;
           panzoomInstance.resume();
           transform = panzoomInstance.getTransform();
-          panzoomInstance.zoomTo(transform.x, transform.y, 2/3);
+          panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 2/3);
           break;
         case "e":
           modeFitToHeight.value = false;
           modeFitToWidth.value = false;
-          
+          panzoomInstance.resume();
           transform = panzoomInstance.getTransform();
-          panzoomInstance.zoomTo(transform.x + window.innerWidth/4, transform.y + window.innerHeight/4, 1.5);
+          panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 1.5);
           break;
         case "r":
           panzoomInstance.moveTo(0, 0);
@@ -118,9 +159,24 @@
     });
   });
 
-  window.electronAPI?.handleArgs((event, value) => {
-    allImages.value = value;
-  })
+  window.ipcRenderer?.handleArgsReplace((event, value) => {
+    console.log('handleArgsReplace', value);
+    allImages.value = value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f));
+  });
+
+  window.ipcRenderer?.handleArgsAppend((event, value) => {
+    console.log('handleArgsAppend', [...allImages.value, ...value]);
+    allImages.value = [...allImages.value, ...value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f))];
+  });
+
+  if (typeof window.ipcRenderer === 'undefined') {
+    allImages.value = [
+      'https://i.slow.pics/bmnXcYVG.png',
+      'https://i.slow.pics/hcGpSScN.png',
+      'https://i.slow.pics/ZeuCLk82.png',
+      'https://wallpaperaccess.com/full/2637581.jpg'
+    ];
+  }
 
 </script>
 
@@ -165,15 +221,19 @@
             <td>t</td>
             <td>Image Zoom: Fit to Height</td>
           </tr>
+          <tr>
+            <td>Debug Info</td>
+            <td>{{ maximumImageHeightPx }}</td>
+          </tr>
         </tbody>
       </table>
       
-        
       <img v-if="allImages.length > 0" id="image" ref="image"  :src="allImages[selectedImageIndex]" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }" />
-          
-        
-      
       <p class="none-message" v-else>No images loaded.</p>
+
+      <div style="display:none">
+        <img v-for="(image, i) in allImages" ref="hiddenImages" :src="image" v-show="selectedImageIndex === i" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }"/>
+      </div>
     </div>
   </main>
 </template>
@@ -220,7 +280,7 @@
   }
 
   img.scale {
-    transform-origin: center;
+    height: v-bind(maximumImageHeightPx);
   }
 
   table, tbody, tr, td {
