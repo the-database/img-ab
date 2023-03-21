@@ -9,10 +9,10 @@ img-ab.exe image1.png image2.png ...
 ```
 
 ### Drag and Drop
-Or select several images or folders and drag and drop onto `img-ab.exe`, or open `img-ab` and then drag and drop images or folders onto the application. 
+Select several images or folders and drag and drop onto `img-ab.exe`, or open `img-ab` and then drag and drop images or folders onto the application. 
 
 ### Windows File Exporer Integration
-Or integrate with Send To in Windows File Explorer, set up as follows:
+Integrate with Send To in Windows File Explorer, set up as follows:
 1. Type shell:sendto in Run (Windows+R)
 2. Create a shortcut to img-ab.exe and move it to the Send To folder that was opened in the previous step. 
 
