@@ -22,3 +22,11 @@ And then use it:
 
 ### Keybindings
 Press `h` to view keybindings. 
+
+## Compile from Source
+With NodeJS LTS installed, run the following:
+```
+npm install
+npm run build
+npm run make
+```
