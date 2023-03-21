@@ -23,7 +23,7 @@ And then use it:
 ### Keybindings
 Press `h` to view keybindings. 
 
-## Compile from Source
+## Build from Source
 With NodeJS LTS installed, run the following:
 ```
 npm install
