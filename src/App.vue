@@ -98,10 +98,14 @@
 
       switch (e.key) {
         case "ArrowLeft":
-            // Left pressed
+            if (selectedImageIndex.value > 0) {
+              selectedImageIndex.value--;
+            }
             break;
         case "ArrowRight":
-            // Right pressed
+            if (selectedImageIndex.value < allImages.value.length - 1) {
+              selectedImageIndex.value++;
+            }
             break;
         case "ArrowUp":
             // Up pressed
@@ -194,8 +198,20 @@
             <td>Show/Hide Help</td>
           </tr>
           <tr>
-            <td>1-{{ allImages.length }}</td>
+            <td>1-{{ Math.min(allImages.length, 9) }}</td>
             <td>Select Image</td>
+          </tr>
+          <tr>
+            <td>Left/Right Arrow</td>
+            <td>Prev/Next Image in Comparison</td>
+          </tr>
+          <tr>
+            <td>Up/Down Arrow or PageUp/PageDown</td>
+            <td>Prev/Next Comparison</td>
+          </tr>
+          <tr>
+            <td>Home/End</td>
+            <td>First/Last Comparison</td>
           </tr>
           <tr>
             <td>i</td>
@@ -222,8 +238,12 @@
             <td>Image Zoom: Fit to Height</td>
           </tr>
           <tr>
-            <td>Debug Info</td>
-            <td>{{ maximumImageHeightPx }}</td>
+            <td>Scroll Wheel Up/Down</td>
+            <td>Zoom In/Out at Current Cursor Position</td>
+          </tr>
+          <tr>
+            <td>y</td>
+            <td>Toggle Nearest Neighbor / Smooth Sampling</td>
           </tr>
         </tbody>
       </table>

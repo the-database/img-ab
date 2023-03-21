@@ -62,14 +62,20 @@ function handleChangePage(input) {
       }
       break;
     case "PageUp":
+    case "ArrowUp":
       if (folderMode) {
-        currentIndex--;
+        if (currentIndex > 0) {
+          currentIndex--;
+        }
         win.webContents.send('send-args-replace', getCurrentFilesForFolderMode());
       }
       break;
     case "PageDown":
+    case "ArrowDown":
       if (folderMode) {
-        currentIndex++;
+        if (currentIndex < lastIndex) {
+          currentIndex++;
+        }
         win.webContents.send('send-args-replace', getCurrentFilesForFolderMode());
       }
       break;
