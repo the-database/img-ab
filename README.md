@@ -6,6 +6,14 @@ Supply images as command line arguments:
 img-ab.exe image1.png image2.png ...
 ```
 
-Or select several images and drag and drop onto `img-ab.exe`. 
+Or select several images or folders and drag and drop onto `img-ab.exe`, or open `img-ab` and then drag and drop images or folders onto the application. 
+
+Or integrate with Send To in Windows File Explorer, set up as follows:
+1. Type shell:sendto in Run (Windows+R)
+2. Create a shortcut to img-ab.exe and move it to the Send To folder that was opened in the previous step. 
+
+And then use it:
+1. Select one or more files or folders, right click, choose Send To > img-ab.exe
+2. Optionally drag and drop more images or folders to add more to compare. 
 
 Press `h` to view keybindings. 
