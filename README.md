@@ -23,6 +23,23 @@ And then use it:
 ### Keybindings
 Press `h` to view keybindings. 
 
+|||
+| --- | --- |
+| h | Show/Hide Help |
+| 1-9 | Select Image |
+| Left/Right Arrow | Prev/Next Image in Comparison |
+| Up/Down Arrow or PageUp/PageDown | Prev/Next Comparison |
+| Home/End | First/Last Comparison |
+| i | Show/Hide Image Info |
+| q | Image Zoom: 100% Image Size |
+| w | Image Zoom: Zoom Out |
+| e | Image Zoom: Zoom In |
+| r | Image Zoom: Fit to Width |
+| t | Image Zoom: Fit to Height |
+| Scroll Wheel Up/Down | Zoom In/Out at Current Cursor Position |
+| y | Toggle Nearest Neighbor / Smooth Sampling |
+
+
 ## Build from Source
 With NodeJS LTS installed, check out the source code and run the following from the root directory of the project:
 ```
