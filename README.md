@@ -24,7 +24,7 @@ And then use it:
 Press `h` to view keybindings. 
 
 ## Build from Source
-With NodeJS LTS installed, run the following:
+With NodeJS LTS installed, check out the source code and run the following from the root directory of the project:
 ```
 npm install
 npm run build
