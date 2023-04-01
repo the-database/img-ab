@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const process = require('process');
@@ -174,3 +174,60 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+// main
+ipcMain.on('show-context-menu', (event, state) => {
+  console.log('state', state);
+
+  const template = [
+    {
+      label: 'Show Info',
+      type: 'checkbox',
+      checked: state.showInfo,
+      click: () => { event.sender.send('context-menu-command', 'show-info') }
+    },
+    {
+      label: 'Show Help',
+      type: 'checkbox',
+      checked: state.showHelp,
+      click: () => { event.sender.send('context-menu-command', 'show-help') }
+    }, 
+    {
+      label: '100% Zoom',
+      type: 'checkbox',
+      checked: false,
+      click: () => { event.sender.send('context-menu-command', 'mode-100-zoom') }
+    },
+    {
+      label: 'Fit to Screen Width',
+      type: 'checkbox',
+      checked: state.modeFitToWidth,
+      click: () => { event.sender.send('context-menu-command', 'mode-fit-to-width') }
+    },
+    {
+      label: 'Fit to Screen Height',
+      type: 'checkbox',
+      checked: state.modeFitToHeight,
+      click: () => { event.sender.send('context-menu-command', 'mode-fit-to-height') }
+    },
+    {
+      label: 'Smooth Sampling',
+      type: 'checkbox',
+      checked: !state.nearestNeighborSampling,
+      click: () => { event.sender.send('context-menu-command', 'nearest-neighbor-sampling') }
+    },
+    { type: 'separator' },
+  ];
+
+  state?.allImages?.forEach((image, index) => {
+    template.push({
+      label: `${index+1}: ${image}`,
+      type: 'checkbox',
+      checked: index === state.selectedImageIndex,
+      click: () => { event.sender.send('context-menu-command', 'select-image', index) }
+    });
+  });
+
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup(BrowserWindow.fromWebContents(event.sender));
+})

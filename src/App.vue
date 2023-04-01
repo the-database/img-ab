@@ -1,24 +1,23 @@
 <script setup>
-  import { ref, computed, onMounted, watch } from 'vue';
+  import { ref, reactive, computed, onMounted, watch } from 'vue';
+  import { cloneDeep } from 'lodash-es';
   import panzoom from 'panzoom';
 
-  const allImages = ref([]);
+  const state = reactive({
+    allImages: [],
+    selectedImageIndex: 0,
+    nearestNeighborSampling: false,
+    showInfo: false,
+    showHelp: false,
+    modeFitToHeight: false,
+    modeFitToWidth: false,
+  });
 
   const image = ref(null);
   const hiddenImages = ref(null);
   const imageContainer = ref(null);
 
-  const selectedImageIndex = ref(0);
-
-  const nearestNeighborSampling = ref(false);
-  const imageRendering = computed(() => nearestNeighborSampling.value ? 'pixelated' : 'optimizeQuality');
-
-  const showInfo = ref(false);
-  const showHelp = ref(false);
-
-  const modeFitToWidth = ref(false);
-  const modeFitToHeight = ref(false);
-  const scalingFactor = ref(1.0);
+  const imageRendering = computed(() => state.nearestNeighborSampling ? 'pixelated' : 'optimizeQuality');
 
   let panzoomInstance = null;
 
@@ -63,7 +62,59 @@
     immediate: true,
   });
 
+  function handleSelectImage(index) {
+    if (index <= state.allImages.length && index > 0) {
+      state.selectedImageIndex = index - 1;
+    }
+  }
+
+  function handleShowInfo() {
+    state.showInfo = !state.showInfo;
+  }
+
+  function handleShowHelp() {
+    state.showHelp = !state.showHelp;
+  }
+
+  function handleMode100Zoom() {
+    state.modeFitToHeight = false;
+    state.modeFitToWidth = false;
+    panzoomInstance.pause();
+    panzoomInstance.resume();
+    transform = panzoomInstance.getTransform();
+    panzoomInstance.moveTo(0, 0);
+    panzoomInstance.zoomAbs(0, 0, 1);
+  }
+
+  function handleModeFitToWidth() {
+    panzoomInstance.moveTo(0, 0);
+    panzoomInstance.zoomAbs(0, 0, 1);
+    panzoomInstance.pause();
+    state.modeFitToWidth = true;
+    state.modeFitToHeight = false;
+  }
+
+  function handleModeFitToHeight() {
+    panzoomInstance.moveTo(0, 0);
+    panzoomInstance.zoomAbs(0, 0, 1);
+    panzoomInstance.pause();
+    state.modeFitToHeight = true;
+    state.modeFitToWidth = false;
+  }
+
+  function handleNearestNeighborSampling() {
+    state.nearestNeighborSampling = !state.nearestNeighborSampling;
+  }
+
   onMounted(() => {
+
+    
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      window.ipcRenderer?.handleContextMenu(cloneDeep(state));
+    });
+
+
 
     document.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -89,22 +140,20 @@
       console.log("keydown", e.key);
       if (isFinite(e.key)) {
         const numberPressed = parseInt(e.key);
-        if (numberPressed <= allImages.value.length && numberPressed > 0) {
-          selectedImageIndex.value = numberPressed - 1;
-        }
+        handleSelectImage(numberPressed);
       }
 
       let transform;
 
       switch (e.key) {
         case "ArrowLeft":
-            if (selectedImageIndex.value > 0) {
-              selectedImageIndex.value--;
+            if (state.selectedImageIndex > 0) {
+              state.selectedImageIndex--;
             }
             break;
         case "ArrowRight":
-            if (selectedImageIndex.value < allImages.value.length - 1) {
-              selectedImageIndex.value++;
+            if (state.selectedImageIndex < state.allImages.length - 1) {
+              state.selectedImageIndex++;
             }
             break;
         case "ArrowUp":
@@ -114,50 +163,36 @@
             // Down pressed
             break;
         case "i":
-          showInfo.value = !showInfo.value;
+          handleShowInfo();
           break;
         case "h":
-          showHelp.value = !showHelp.value;
+          handleShowHelp();
           break;
-          case "q":
-          modeFitToHeight.value = false;
-          modeFitToWidth.value = false;
-          panzoomInstance.pause();
-          panzoomInstance.resume();
-          transform = panzoomInstance.getTransform();
-          panzoomInstance.moveTo(0, 0);
-          panzoomInstance.zoomAbs(0, 0, 1);
+        case "q":
+          handleMode100Zoom();
           break;
         case "w":
-          modeFitToHeight.value = false;
-          modeFitToWidth.value = false;
+          state.modeFitToHeight = false;
+          state.modeFitToWidth = false;
           panzoomInstance.resume();
           transform = panzoomInstance.getTransform();
           panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 2/3);
           break;
         case "e":
-          modeFitToHeight.value = false;
-          modeFitToWidth.value = false;
+          state.modeFitToHeight = false;
+          state.modeFitToWidth = false;
           panzoomInstance.resume();
           transform = panzoomInstance.getTransform();
           panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 1.5);
           break;
         case "r":
-          panzoomInstance.moveTo(0, 0);
-          panzoomInstance.zoomAbs(0, 0, 1);
-          panzoomInstance.pause();
-          modeFitToWidth.value = true;
-          modeFitToHeight.value = false;
+          handleModeFitToWidth();
           break;
         case "t":
-          panzoomInstance.moveTo(0, 0);
-          panzoomInstance.zoomAbs(0, 0, 1);
-          panzoomInstance.pause();
-          modeFitToHeight.value = true;
-          modeFitToWidth.value = false;
+          handleModeFitToHeight();
           break;
         case "y":
-          nearestNeighborSampling.value = !nearestNeighborSampling.value;
+          handleNearestNeighborSampling();
           break;
       }
     });
@@ -165,16 +200,42 @@
 
   window.ipcRenderer?.handleArgsReplace((event, value) => {
     console.log('handleArgsReplace', value);
-    allImages.value = value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f));
+    state.allImages = value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f));
   });
 
   window.ipcRenderer?.handleArgsAppend((event, value) => {
-    console.log('handleArgsAppend', [...allImages.value, ...value]);
-    allImages.value = [...allImages.value, ...value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f))];
+    console.log('handleArgsAppend', [...state.allImages, ...value]);
+    state.allImages = [...state.allImages, ...value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f))];
+  });
+
+  window.ipcRenderer?.handleContextMenuCommand((event, command, args) => {
+    console.log('handleContextMenuCommand', event, command, args);
+    switch (command) {
+      case 'select-image':
+        handleSelectImage(args+1);
+        break;
+      case 'show-info':
+        handleShowInfo();
+        break;
+      case 'show-help':
+        handleShowHelp();
+        break;
+      case 'mode-100-zoom':
+        handleMode100Zoom();
+      case 'mode-fit-to-width':
+        handleModeFitToWidth();
+        break;
+      case 'mode-fit-to-height':
+        handleModeFitToHeight();
+        break;
+      case 'nearest-neighbor-sampling':
+        handleNearestNeighborSampling();
+        break;
+    }
   });
 
   if (typeof window.ipcRenderer === 'undefined') {
-    allImages.value = [
+    state.allImages = [
       'https://i.slow.pics/bmnXcYVG.png',
       'https://i.slow.pics/hcGpSScN.png',
       'https://i.slow.pics/ZeuCLk82.png',
@@ -187,18 +248,17 @@
 <template>
   <main>
     <div class="image-container" ref="imageContainer">
-      <span class="info" v-show="showInfo">
-        {{ selectedImageIndex+1 }}/{{ allImages.length }}: {{  allImages[selectedImageIndex] }}
-        <span v-show="!modeFitToHeight && !modeFitToWidth">Zoom={{ Math.floor(scalingFactor * 100) }}%</span>
+      <span class="info" v-show="state.showInfo">
+        {{ state.selectedImageIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedImageIndex] }}
       </span>
-      <table class="help" v-show="showHelp">
+      <table class="help" v-show="state.showHelp">
         <tbody>
           <tr>
             <td>h</td>
             <td>Show/Hide Help</td>
           </tr>
           <tr>
-            <td>1-{{ Math.min(allImages.length, 9) }}</td>
+            <td>1-{{ Math.min(state.allImages.length, 9) }}</td>
             <td>Select Image</td>
           </tr>
           <tr>
@@ -248,11 +308,11 @@
         </tbody>
       </table>
       
-      <img v-if="allImages.length > 0" id="image" ref="image"  :src="allImages[selectedImageIndex]" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }" />
+      <img v-if="state.allImages.length > 0" id="image" ref="image"  :src="state.allImages[state.selectedImageIndex]" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }" />
       <p class="none-message" v-else>No images loaded.</p>
 
       <div style="display:none">
-        <img v-for="(image, i) in allImages" ref="hiddenImages" :src="image" v-show="selectedImageIndex === i" :class="{ 'fit-to-height': modeFitToHeight, 'fit-to-width': modeFitToWidth, 'scale': !modeFitToHeight && !modeFitToWidth }"/>
+        <img v-for="(image, i) in state.allImages" ref="hiddenImages" :src="image" v-show="state.selectedImageIndex === i" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }"/>
       </div>
     </div>
   </main>
