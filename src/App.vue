@@ -76,6 +76,22 @@
     state.showHelp = !state.showHelp;
   }
 
+  function handleZoomIn() {
+    state.modeFitToHeight = false;
+    state.modeFitToWidth = false;
+    panzoomInstance.resume();
+    transform = panzoomInstance.getTransform();
+    panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 1.5);
+  }
+
+  function handleZoomOut() {
+    state.modeFitToHeight = false;
+    state.modeFitToWidth = false;
+    panzoomInstance.resume();
+    transform = panzoomInstance.getTransform();
+    panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 2/3);
+  }
+
   function handleMode100Zoom() {
     state.modeFitToHeight = false;
     state.modeFitToWidth = false;
@@ -113,8 +129,6 @@
       e.preventDefault()
       window.ipcRenderer?.handleContextMenu(cloneDeep(state));
     });
-
-
 
     document.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -172,18 +186,10 @@
           handleMode100Zoom();
           break;
         case "w":
-          state.modeFitToHeight = false;
-          state.modeFitToWidth = false;
-          panzoomInstance.resume();
-          transform = panzoomInstance.getTransform();
-          panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 2/3);
+          handleZoomOut();
           break;
         case "e":
-          state.modeFitToHeight = false;
-          state.modeFitToWidth = false;
-          panzoomInstance.resume();
-          transform = panzoomInstance.getTransform();
-          panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 1.5);
+          handleZoomIn();
           break;
         case "r":
           handleModeFitToWidth();
@@ -193,6 +199,9 @@
           break;
         case "y":
           handleNearestNeighborSampling();
+          break;
+        case "s":
+          window.ipcRenderer?.handleStartScreenCapture();
           break;
       }
     });
@@ -212,13 +221,25 @@
     console.log('handleContextMenuCommand', event, command, args);
     switch (command) {
       case 'select-image':
-        handleSelectImage(args+1);
+        console.log('select-image', args.index+1);
+        handleSelectImage(args.index+1);
+        if (args.forScreenshot) {
+          setTimeout(() => {
+            window.ipcRenderer?.handleSelectedImageForScreenshot(cloneDeep(state));
+          }, 100);
+        }
         break;
       case 'show-info':
         handleShowInfo();
         break;
       case 'show-help':
         handleShowHelp();
+        break;
+      case 'zoom-in':
+        handleZoomIn();
+        break;
+      case 'zoom-out':
+        handleZoomOut();
         break;
       case 'mode-100-zoom':
         handleMode100Zoom();
@@ -304,6 +325,10 @@
           <tr>
             <td>y</td>
             <td>Toggle Nearest Neighbor / Smooth Sampling</td>
+          </tr>
+          <tr>
+            <td>s</td>
+            <td>Take Screen Capture of All Images</td>
           </tr>
         </tbody>
       </table>
