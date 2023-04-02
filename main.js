@@ -288,7 +288,7 @@ ipcMain.on('selected-image-for-screenshot', async (event, state) => {
   .capturePage()
   .then((img) => {
     
-    fs.writeFile(path.join(screenshotsPath, newCaptureDir, path.basename(image)),
+    fs.writeFile(path.join(screenshotsPath, newCaptureDir, `${state.selectedImageIndex+1}_${path.basename(image)}`),
     img.toPNG(), "base64", function (err) {
       if (err) throw err;
     });
