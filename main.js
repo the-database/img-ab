@@ -143,8 +143,10 @@ function sendArgs(pathArr) {
       fileListPerFolder[p] = [];
       let dirent;
       while ((dirent = dir.readSync()) !== null) {
-        console.log(path.resolve(p, dirent.name));
-        fileListPerFolder[p].push(path.resolve(p, dirent.name));
+        if (/\.(jpeg|jpg|png|webp|gif)$/.test(dirent.name) {
+          console.log(path.resolve(p, dirent.name));
+          fileListPerFolder[p].push(path.resolve(p, dirent.name));
+        }
       }
       dir.closeSync();
       if (fileListPerFolder[p].length - 1 > lastIndex) {
@@ -196,6 +198,8 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+app.commandLine.appendSwitch('force-color-profile', 'srgb');
 
 // main
 ipcMain.on('show-context-menu', (event, state) => {

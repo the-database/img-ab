@@ -7,7 +7,7 @@
     allImages: [],
     selectedImageIndex: 0,
     nearestNeighborSampling: false,
-    showInfo: false,
+    showInfo: true,
     showHelp: false,
     modeFitToHeight: false,
     modeFitToWidth: false,
