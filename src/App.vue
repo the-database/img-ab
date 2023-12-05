@@ -1,7 +1,7 @@
 <script setup>
   import { ref, reactive, computed, onMounted, watch } from 'vue';
   import { cloneDeep } from 'lodash-es';
-  import panzoom from 'panzoom';
+  import panzoom from './panzoom';
 
   const state = reactive({
     allImages: [],
@@ -32,10 +32,11 @@
 
       panzoomInstance = panzoom(image.value, {
         bounds: true,
-        boundsPadding: 1,
+        boundsPadding: .1,
+        // boundsDisabledForZoom: true,
         zoomDoubleClickSpeed: 1,
         maxZoom: 50,
-        minZoom: 1,
+        minZoom: .1,
         beforeWheel: function(e) {
           // return true;
         }
@@ -80,7 +81,6 @@
     state.modeFitToHeight = false;
     state.modeFitToWidth = false;
     panzoomInstance.resume();
-    transform = panzoomInstance.getTransform();
     panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 1.5);
   }
 
@@ -88,7 +88,6 @@
     state.modeFitToHeight = false;
     state.modeFitToWidth = false;
     panzoomInstance.resume();
-    transform = panzoomInstance.getTransform();
     panzoomInstance.zoomTo(window.innerWidth/2, window.innerHeight/2, 2/3);
   }
 
@@ -97,7 +96,6 @@
     state.modeFitToWidth = false;
     panzoomInstance.pause();
     panzoomInstance.resume();
-    transform = panzoomInstance.getTransform();
     panzoomInstance.moveTo(0, 0);
     panzoomInstance.zoomAbs(0, 0, 1);
   }
@@ -257,9 +255,8 @@
 
   if (typeof window.ipcRenderer === 'undefined') {
     state.allImages = [
-      'https://i.slow.pics/bmnXcYVG.png',
-      'https://i.slow.pics/hcGpSScN.png',
-      'https://i.slow.pics/ZeuCLk82.png',
+      'https://i.slow.pics/xYGUwqTk.png',
+      'https://i.slow.pics/5SSGI45l.png',
       'https://wallpaperaccess.com/full/2637581.jpg'
     ];
   }

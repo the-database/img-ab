@@ -5,6 +5,9 @@ const process = require('process');
 
 const screenshotsPath = path.join(require('os').homedir(), "Pictures/img-ab");
 
+// run this as early in the main process as possible
+if (require('electron-squirrel-startup')) app.quit();
+
 if (!fs.existsSync(screenshotsPath)){
   fs.mkdirSync(screenshotsPath);
 }
@@ -143,7 +146,7 @@ function sendArgs(pathArr) {
       fileListPerFolder[p] = [];
       let dirent;
       while ((dirent = dir.readSync()) !== null) {
-        if (/\.(jpeg|jpg|png|webp|gif)$/.test(dirent.name) {
+        if (/\.(jpeg|jpg|png|webp|gif)$/.test(dirent.name)) {
           console.log(path.resolve(p, dirent.name));
           fileListPerFolder[p].push(path.resolve(p, dirent.name));
         }
