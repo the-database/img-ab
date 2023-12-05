@@ -1,5 +1,8 @@
+var path = require('path');
 module.exports = {
-  packagerConfig: {},
+  packagerConfig: {
+    icon: path.join(process.cwd(), "src/assets/logo") // no file extension required
+  },
   rebuildConfig: {},
   makers: [
     {

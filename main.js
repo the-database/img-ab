@@ -39,6 +39,7 @@ function currentDateTimeString() {
 
 function createWindow() {
   win = new BrowserWindow({
+    icon: path.join(process.cwd(), "src/assets/logo"),
     width: 800,
     height: 600,
     webPreferences: {
