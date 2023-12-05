@@ -2,18 +2,25 @@
   import { ref, reactive, computed, onMounted, watch } from 'vue';
   import { cloneDeep } from 'lodash-es';
   import panzoom from './panzoom';
+  //import ImageCompare from "image-compare-viewer";
+  import ImageCompare from "./image-compare-viewer";
+  import './image-compare-viewer/image-compare-viewer.min.css';
 
   const state = reactive({
     allImages: [],
     selectedImageIndex: 0,
+    selectedImageOverlayIndex: 1,
     nearestNeighborSampling: false,
     showInfo: true,
     showHelp: false,
     modeFitToHeight: false,
     modeFitToWidth: false,
+    modeSldier: false,
   });
 
   const image = ref(null);
+  const imageCompare = ref(null);
+  const imageOverlay = ref(null);
   const hiddenImages = ref(null);
   const imageContainer = ref(null);
 
@@ -24,26 +31,29 @@
   const maximumImageHeight = ref(0);
   const maximumImageHeightPx = computed(() => `${maximumImageHeight.value}px`);
 
-  watch(image, ( newValue, oldValue ) => {
+  watch(imageCompare, (newValue, oldValue) => {
+      if (imageCompare.value) {
 
-    if (image.value) {
+        imageCompare.value.ondragstart = function() { return false; }; // TODO ???
 
-      image.value.ondragstart = function() { return false; }; // TODO ???
+        panzoomInstance = panzoom(imageCompare.value, {
+          bounds: true,
+          boundsPadding: .1,
+          // boundsDisabledForZoom: true,
+          zoomDoubleClickSpeed: 1,
+          maxZoom: 50,
+          minZoom: .1,
+          beforeWheel: function(e) {
+            // return true;
+          }
+        });
 
-      panzoomInstance = panzoom(image.value, {
-        bounds: true,
-        boundsPadding: .1,
-        // boundsDisabledForZoom: true,
-        zoomDoubleClickSpeed: 1,
-        maxZoom: 50,
-        minZoom: .1,
-        beforeWheel: function(e) {
-          // return true;
-        }
-      });
-    }
+        const viewer = new ImageCompare(imageCompare.value, {
+          hoverStart: true,
+        }).mount();
+      }
   }, {
-    immediate: true,
+    immediate: true
   });
 
   watch(hiddenImages, ( newValue, oldValue ) => {
@@ -265,9 +275,11 @@
 
 <template>
   <main>
+
     <div class="image-container" ref="imageContainer">
       <span class="info" v-show="state.showInfo">
         {{ state.selectedImageIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedImageIndex] }}
+        {{ state.selectedImageOverlayIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedImageIndex] }}
       </span>
       <table class="help" v-show="state.showHelp">
         <tbody>
@@ -330,6 +342,12 @@
         </tbody>
       </table>
       
+
+      <div ref="imageCompare">
+        <img src="https://i.slow.pics/xYGUwqTk.png" alt="" />
+        <img src="https://i.slow.pics/5SSGI45l.png" alt="" />
+      </div>
+
       <img v-if="state.allImages.length > 0" id="image" ref="image"  :src="state.allImages[state.selectedImageIndex]" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }" />
       <p class="none-message" v-else>No images loaded.</p>
 
