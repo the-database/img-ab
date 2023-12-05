@@ -43,6 +43,7 @@ class ImageCompare {
       circle: [5, 3],
       standard: [8, 0],
     };
+    this.showSlider = true;
   }
 
   mount() {
@@ -139,6 +140,10 @@ class ImageCompare {
   }
 
   _slideCompare (ev) {
+    if (!this.showSlider) {
+      return;
+    }
+
     if (this.animationFrameId === null) {
       this.animationFrameId = requestAnimationFrame(() => {
         const bounds = this.el.getBoundingClientRect();
@@ -405,6 +410,18 @@ class ImageCompare {
       `;
       this.el.appendChild(fluidWrapper);
     }
+  }
+
+  toggleSlider() {
+    this.showSlider = !this.showSlider;
+
+    document.querySelectorAll('.icv__control,.icv__wrapper').forEach(element => {
+      element.classList.toggle('hide');
+    });
+
+    document.querySelectorAll('.icv').forEach(element => {
+      element.classList.toggle('default-cursor');
+    });
   }
 }
 

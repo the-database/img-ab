@@ -9,13 +9,13 @@
   const state = reactive({
     allImages: [],
     selectedImageIndex: 0,
-    selectedImageOverlayIndex: 1,
+    selectedOverlayImageIndex: 1,
     nearestNeighborSampling: false,
     showInfo: true,
     showHelp: false,
     modeFitToHeight: false,
     modeFitToWidth: false,
-    modeSldier: false,
+    modeSlider: true,
   });
 
   const image = ref(null);
@@ -27,6 +27,7 @@
   const imageRendering = computed(() => state.nearestNeighborSampling ? 'pixelated' : 'optimizeQuality');
 
   let panzoomInstance = null;
+  let imageCompareViewerInstance = null;
 
   const maximumImageHeight = ref(0);
   const maximumImageHeightPx = computed(() => `${maximumImageHeight.value}px`);
@@ -48,9 +49,13 @@
           }
         });
 
-        const viewer = new ImageCompare(imageCompare.value, {
+        imageCompareViewerInstance = new ImageCompare(imageCompare.value, {
           hoverStart: true,
-        }).mount();
+        });
+
+        console.log('icvi?', imageCompareViewerInstance);
+        
+        imageCompareViewerInstance.mount();
       }
   }, {
     immediate: true
@@ -76,6 +81,12 @@
   function handleSelectImage(index) {
     if (index <= state.allImages.length && index > 0) {
       state.selectedImageIndex = index - 1;
+    }
+  }
+
+  function handleSelectOverlayImage(index) {
+    if (index <= state.allImages.length && index > 0) {
+      state.selectedOverlayImageIndex = index - 1;
     }
   }
 
@@ -162,7 +173,11 @@
       console.log("keydown", e.key);
       if (isFinite(e.key)) {
         const numberPressed = parseInt(e.key);
-        handleSelectImage(numberPressed);
+        if (e.ctrlKey) {
+          handleSelectOverlayImage(numberPressed);
+        } else {
+          handleSelectImage(numberPressed);
+        }
       }
 
       let transform;
@@ -208,6 +223,10 @@
         case "y":
           handleNearestNeighborSampling();
           break;
+        case "a":
+          console.log("viewer?", imageCompareViewerInstance, panzoomInstance);
+          state.modeSlider = !state.modeSlider;
+          imageCompareViewerInstance.toggleSlider();
         case "s":
           window.ipcRenderer?.handleStartScreenCapture();
           break;
@@ -215,14 +234,27 @@
     });
   });
 
+  function initImageIndex() {
+    if (state.allImages.length < 2) {
+      state.selectedOverlayImageIndex = 0;
+    }
+    else {
+      if (state.selectedOverlayImageIndex === 0) {
+        state.selectedOverlayImageIndex = 1;
+      }
+    }
+  }
+
   window.ipcRenderer?.handleArgsReplace((event, value) => {
     console.log('handleArgsReplace', value);
     state.allImages = value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f));
+    initImageIndex();
   });
 
   window.ipcRenderer?.handleArgsAppend((event, value) => {
     console.log('handleArgsAppend', [...state.allImages, ...value]);
     state.allImages = [...state.allImages, ...value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f))];
+    initImageIndex();
   });
 
   window.ipcRenderer?.handleContextMenuCommand((event, command, args) => {
@@ -265,9 +297,9 @@
 
   if (typeof window.ipcRenderer === 'undefined') {
     state.allImages = [
-      'https://i.slow.pics/xYGUwqTk.png',
-      'https://i.slow.pics/5SSGI45l.png',
-      'https://wallpaperaccess.com/full/2637581.jpg'
+      // 'https://i.slow.pics/xYGUwqTk.png',
+      // 'https://i.slow.pics/5SSGI45l.png',
+      // 'https://wallpaperaccess.com/full/2637581.jpg'
     ];
   }
 
@@ -279,7 +311,9 @@
     <div class="image-container" ref="imageContainer">
       <span class="info" v-show="state.showInfo">
         {{ state.selectedImageIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedImageIndex] }}
-        {{ state.selectedImageOverlayIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedImageIndex] }}
+      </span>
+      <span class="info-right" v-show="state.showInfo && state.modeSlider">
+        {{ state.selectedOverlayImageIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedOverlayImageIndex] }}
       </span>
       <table class="help" v-show="state.showHelp">
         <tbody>
@@ -289,7 +323,11 @@
           </tr>
           <tr>
             <td>1-{{ Math.min(state.allImages.length, 9) }}</td>
-            <td>Select Image</td>
+            <td>Select Image (Overlay Mode) / Select Left Image (Slider Mode)</td>
+          </tr>
+          <tr>
+            <td>Ctrl+1-{{ Math.min(state.allImages.length, 9) }}</td>
+            <td>Select Right Image (Slider Mode Only)</td>
           </tr>
           <tr>
             <td>Left/Right Arrow</td>
@@ -306,6 +344,10 @@
           <tr>
             <td>i</td>
             <td>Show/Hide Image Info</td>
+          </tr>
+          <tr>
+            <td>a</td>
+            <td>Toggle Overlay/Slider Mode</td>
           </tr>
           <tr>
             <td>q</td>
@@ -344,12 +386,84 @@
       
 
       <div ref="imageCompare">
-        <img src="https://i.slow.pics/xYGUwqTk.png" alt="" />
-        <img src="https://i.slow.pics/5SSGI45l.png" alt="" />
+        <img :src="state.allImages[state.selectedImageIndex]" alt="" />
+        <img :src="state.allImages[state.selectedOverlayImageIndex]" alt="" />
       </div>
 
       <img v-if="state.allImages.length > 0" id="image" ref="image"  :src="state.allImages[state.selectedImageIndex]" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }" />
-      <p class="none-message" v-else>No images loaded.</p>
+      <div class="welcome-message" v-else>
+        <h1 class="welcome-title">img-ab</h1>
+        <p>drag and drop one or more images or folders to get started</p>
+
+        <table class="welcome-help" >
+          <tbody>
+            <tr>
+              <td>h</td>
+              <td>Show/Hide Help</td>
+            </tr>
+            <tr>
+              <td>1-{{ Math.min(state.allImages.length, 9) }}</td>
+              <td>Select Image (Overlay Mode) / Select Left Image (Slider Mode)</td>
+            </tr>
+            <tr>
+              <td>Ctrl+1-{{ Math.min(state.allImages.length, 9) }}</td>
+              <td>Select Right Image (Slider Mode Only)</td>
+            </tr>
+            <tr>
+              <td>Left/Right Arrow</td>
+              <td>Prev/Next Image in Comparison</td>
+            </tr>
+            <tr>
+              <td>Up/Down Arrow or PageUp/PageDown</td>
+              <td>Prev/Next Comparison</td>
+            </tr>
+            <tr>
+              <td>Home/End</td>
+              <td>First/Last Comparison</td>
+            </tr>
+            <tr>
+              <td>i</td>
+              <td>Show/Hide Image Info</td>
+            </tr>
+            <tr>
+              <td>a</td>
+              <td>Toggle Overlay/Slider Mode</td>
+            </tr>
+            <tr>
+              <td>q</td>
+              <td>Image Zoom: 100% Image Size</td>
+            </tr>
+            <tr>
+              <td>w</td>
+              <td>Image Zoom: Zoom Out</td>
+            </tr>
+            <tr>
+              <td>e</td>
+              <td>Image Zoom: Zoom In</td>
+            </tr>
+            <tr>
+              <td>r</td>
+              <td>Image Zoom: Fit to Width</td>
+            </tr>
+            <tr>
+              <td>t</td>
+              <td>Image Zoom: Fit to Height</td>
+            </tr>
+            <tr>
+              <td>Scroll Wheel Up/Down</td>
+              <td>Zoom In/Out at Current Cursor Position</td>
+            </tr>
+            <tr>
+              <td>y</td>
+              <td>Toggle Nearest Neighbor / Smooth Sampling</td>
+            </tr>
+            <tr>
+              <td>s</td>
+              <td>Take Screen Capture of All Images</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div style="display:none">
         <img v-for="(image, i) in state.allImages" ref="hiddenImages" :src="image" v-show="state.selectedImageIndex === i" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }"/>
@@ -362,7 +476,7 @@
 <style scoped>
   .image-container .info {
     position: fixed;
-    top: 1rem;
+    top: 0rem;
     left: 1rem;
     -webkit-text-stroke: 1px #333;
     z-index: 99;
@@ -372,7 +486,20 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    
+  }
+
+  .image-container .info-right {
+    position: fixed;
+    top: 2rem;
+    right: 1rem;
+    -webkit-text-stroke: 1px #333;
+    z-index: 99;
+    font-weight: bold;
+    font-size:1.5rem;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .image-container table.help {
@@ -389,6 +516,7 @@
     
     font-family: inherit;
     font-size:1.5rem;
+    text-align: left;
   }
 
   img.fit-to-height {
@@ -413,8 +541,25 @@
     display: block;
   }
 
-  .none-message {
+  .welcome-message {
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
     padding: 1rem;
+  }
+
+  .welcome-title {
+    font-size: 8rem;
+    opacity: 0.25;
+  }
+
+  .welcome-help {
+    text-align:left;
+    font-size: 0.8rem;
+    line-height: 2;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 4rem;
   }
 
   .image-container {
