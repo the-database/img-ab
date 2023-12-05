@@ -52,10 +52,9 @@
         imageCompareViewerInstance = new ImageCompare(imageCompare.value, {
           hoverStart: true,
         });
-
-        console.log('icvi?', imageCompareViewerInstance);
         
         imageCompareViewerInstance.mount();
+        handleModeSlider();
       }
   }, {
     immediate: true
@@ -141,6 +140,11 @@
     state.nearestNeighborSampling = !state.nearestNeighborSampling;
   }
 
+  function handleModeSlider() {
+    state.modeSlider = !state.modeSlider;
+    imageCompareViewerInstance.toggleSlider();
+  }
+
   onMounted(() => {
 
     
@@ -224,9 +228,7 @@
           handleNearestNeighborSampling();
           break;
         case "a":
-          console.log("viewer?", imageCompareViewerInstance, panzoomInstance);
-          state.modeSlider = !state.modeSlider;
-          imageCompareViewerInstance.toggleSlider();
+          handleModeSlider();
         case "s":
           window.ipcRenderer?.handleStartScreenCapture();
           break;
@@ -297,9 +299,9 @@
 
   if (typeof window.ipcRenderer === 'undefined') {
     state.allImages = [
-      // 'https://i.slow.pics/xYGUwqTk.png',
-      // 'https://i.slow.pics/5SSGI45l.png',
-      // 'https://wallpaperaccess.com/full/2637581.jpg'
+      'https://i.slow.pics/xYGUwqTk.png',
+      'https://i.slow.pics/5SSGI45l.png',
+      'https://wallpaperaccess.com/full/2637581.jpg'
     ];
   }
 
@@ -322,11 +324,11 @@
             <td>Show/Hide Help</td>
           </tr>
           <tr>
-            <td>1-{{ Math.min(state.allImages.length, 9) }}</td>
+            <td>1-9</td>
             <td>Select Image (Overlay Mode) / Select Left Image (Slider Mode)</td>
           </tr>
           <tr>
-            <td>Ctrl+1-{{ Math.min(state.allImages.length, 9) }}</td>
+            <td>Ctrl+1-9</td>
             <td>Select Right Image (Slider Mode Only)</td>
           </tr>
           <tr>
@@ -402,11 +404,11 @@
               <td>Show/Hide Help</td>
             </tr>
             <tr>
-              <td>1-{{ Math.min(state.allImages.length, 9) }}</td>
+              <td>1-9</td>
               <td>Select Image (Overlay Mode) / Select Left Image (Slider Mode)</td>
             </tr>
             <tr>
-              <td>Ctrl+1-{{ Math.min(state.allImages.length, 9) }}</td>
+              <td>Ctrl+1-9</td>
               <td>Select Right Image (Slider Mode Only)</td>
             </tr>
             <tr>
