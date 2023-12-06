@@ -20,7 +20,7 @@
 
   const image = ref(null);
   const imageCompare = ref(null);
-  const imageOverlay = ref(null);
+  const imagePanZoom = ref(null);
   const hiddenImages = ref(null);
   const imageContainer = ref(null);
 
@@ -32,32 +32,30 @@
   const maximumImageHeight = ref(0);
   const maximumImageHeightPx = computed(() => `${maximumImageHeight.value}px`);
 
-  watch(imageCompare, (newValue, oldValue) => {
-      if (imageCompare.value) {
-
-        imageCompare.value.ondragstart = function() { return false; }; // TODO ???
-
-        panzoomInstance = panzoom(imageCompare.value, {
-          bounds: true,
-          boundsPadding: .1,
-          // boundsDisabledForZoom: true,
-          zoomDoubleClickSpeed: 1,
-          maxZoom: 50,
-          minZoom: .1,
-          beforeWheel: function(e) {
-            // return true;
-          }
-        });
-
-        imageCompareViewerInstance = new ImageCompare(imageCompare.value, {
+  watch([imagePanZoom, imageCompare], ([newImagePanZoom, newImageCompare], [prevImagePanZoom, prevImageCompare]) => {
+    if (newImageCompare && newImagePanZoom) {
+      
+      imageCompareViewerInstance = new ImageCompare(newImageCompare, {
           hoverStart: true,
+          smoothing: false,
         });
         
-        imageCompareViewerInstance.mount();
-        handleModeSlider();
+      imageCompareViewerInstance.mount();
+      handleModeSlider();
+    }
+    
+    newImagePanZoom.ondragstart = function() { return false; }; // TODO ???
+
+    panzoomInstance = panzoom(newImagePanZoom, {
+      bounds: true,
+      boundsPadding: 0.1,
+      zoomDoubleClickSpeed: 1,
+      maxZoom: 50,
+      minZoom: .1,
+      beforeWheel: function(e) {
+        // return true;
       }
-  }, {
-    immediate: true
+    });
   });
 
   watch(hiddenImages, ( newValue, oldValue ) => {
@@ -69,6 +67,13 @@
           console.log('onload!!!', img)
           if (img.naturalHeight > maximumImageHeight.value) {
             maximumImageHeight.value = img.naturalHeight;
+            setTimeout(() => {
+              handleModeFitToHeight();
+            }, 0);
+
+            setTimeout(() => {
+              handleMode100Zoom();
+            }, 0);
           }
         }
       });
@@ -402,12 +407,12 @@
       </table>
       
 
-      <div ref="imageCompare">
-        <img :src="state.allImages[state.selectedImageIndex]" alt="" />
-        <img :src="state.allImages[state.selectedOverlayImageIndex]" alt="" />
+      <div ref="imagePanZoom" class="image-panzoom" v-if="state.allImages.length > 0">
+        <div ref="imageCompare" class="image-compare">
+          <img :src="state.allImages[state.selectedImageIndex]" alt="" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }" />
+          <img :src="state.allImages[state.selectedOverlayImageIndex]" alt=""  />
+        </div>
       </div>
-
-      <img v-if="state.allImages.length > 0" id="image" ref="image"  :src="state.allImages[state.selectedImageIndex]" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }" />
       <div class="welcome-message" v-else>
         <h1 class="welcome-title">img-ab</h1>
         <p>drag and drop one or more images or folders to get started</p>
@@ -538,6 +543,8 @@
 
   img.fit-to-height {
     height: 100vh;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   img.fit-to-width {
@@ -584,5 +591,9 @@
     height: 100vh;
     cursor: grab;
     overflow: hidden;
+  }
+
+  .image-panzoom {
+    display: inline-block;
   }
 </style>
