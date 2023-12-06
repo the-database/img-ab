@@ -257,13 +257,13 @@ ipcMain.on('show-context-menu', (event, state) => {
     },
     { type: 'separator' },
     {
-      label: 'Overlay Mode (A)',
+      label: 'View Mode: Overlay (A)',
       type: 'checkbox',
       checked: !state.modeSlider,
       click: () => { event.sender.send('context-menu-command', 'mode-slider') }
     },
     {
-      label: 'Slider Mode (A)',
+      label: 'View Mode: Slider (A)',
       type: 'checkbox',
       checked: state.modeSlider,
       click: () => { event.sender.send('context-menu-command', 'mode-slider') }
