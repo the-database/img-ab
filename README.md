@@ -1,4 +1,4 @@
-# img-ab
+# <img src="logo.png" width="24"></img> img-ab
 Bare-bones desktop image A/B comparison tool.
 ## Usage
 
