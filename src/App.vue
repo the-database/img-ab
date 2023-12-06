@@ -407,7 +407,7 @@
       </table>
       
 
-      <div ref="imagePanZoom" class="image-panzoom" v-if="state.allImages.length > 0">
+      <div ref="imagePanZoom" class="image-panzoom" :class="{'center': state.modeFitToHeight}" v-if="state.allImages.length > 0">
         <div ref="imageCompare" class="image-compare">
           <img :src="state.allImages[state.selectedImageIndex]" alt="" :class="{ 'fit-to-height': state.modeFitToHeight, 'fit-to-width': state.modeFitToWidth, 'scale': !state.modeFitToHeight && !state.modeFitToWidth }" />
           <img :src="state.allImages[state.selectedOverlayImageIndex]" alt=""  />
@@ -595,5 +595,10 @@
 
   .image-panzoom {
     display: inline-block;
+  }
+
+  .image-panzoom.center {
+    left: 50%; 
+    transform: translateX(-50%) !important;
   }
 </style>
