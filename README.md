@@ -47,3 +47,8 @@ npm install
 npm run build
 npm run make
 ```
+
+## Acknowledgements 
+- Testing and feedback:
+   - [422415](https://github.com/422415)
+   - [Kim2091](https://github.com/Kim2091)
