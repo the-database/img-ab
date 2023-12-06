@@ -257,6 +257,19 @@ ipcMain.on('show-context-menu', (event, state) => {
     },
     { type: 'separator' },
     {
+      label: 'Overlay Mode (A)',
+      type: 'checkbox',
+      checked: !state.modeSlider,
+      click: () => { event.sender.send('context-menu-command', 'mode-slider') }
+    },
+    {
+      label: 'Slider Mode (A)',
+      type: 'checkbox',
+      checked: state.modeSlider,
+      click: () => { event.sender.send('context-menu-command', 'mode-slider') }
+    },
+    { type: 'separator' },
+    {
       label: 'Take Screen Capture of All Images (S)',
       click: () => {
         startScreenCapture(event);
@@ -281,7 +294,8 @@ ipcMain.on('show-context-menu', (event, state) => {
 function startScreenCapture(event) {
   newCaptureDir = `capture-${currentDateTimeString()}`;
   fs.mkdirSync(path.join(screenshotsPath, newCaptureDir));
-  event.sender.send('context-menu-command', 'select-image', {index: 0, forScreenshot: true});
+  //event.sender.send('context-menu-command', 'select-image', {index: 0, forScreenshot: true});
+  event.sender.send('context-menu-command', 'request-screen-capture');
 }
 
 ipcMain.on('start-screen-capture', (event, state) => {
@@ -308,5 +322,21 @@ ipcMain.on('selected-image-for-screenshot', async (event, state) => {
   .catch((err) => {
       console.log(err);
   });
+});
 
+ipcMain.on('selected-image-for-screenshot-slider', async (event, state) => {
+  const image = state.allImages[state.selectedImageIndex];
+  const overlayImage = state.allImages[state.selectedOverlayImageIndex];
+  win.webContents
+  .capturePage()
+  .then((img) => {
+    
+    fs.writeFile(path.join(screenshotsPath, newCaptureDir, `${state.selectedImageIndex+1}_${path.basename(image)}_${path.basename(overlayImage)}`),
+    img.toPNG(), "base64", function (err) {
+      if (err) throw err;
+    });
+  })
+  .catch((err) => {
+      console.log(err);
+  });
 });

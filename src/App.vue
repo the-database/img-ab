@@ -184,8 +184,6 @@
         }
       }
 
-      let transform;
-
       switch (e.key) {
         case "ArrowLeft":
             if (state.selectedImageIndex > 0) {
@@ -229,6 +227,7 @@
           break;
         case "a":
           handleModeSlider();
+          break;
         case "s":
           window.ipcRenderer?.handleStartScreenCapture();
           break;
@@ -291,8 +290,24 @@
       case 'mode-fit-to-height':
         handleModeFitToHeight();
         break;
+      case 'mode-slider':
+        handleModeSlider();
+        break;
       case 'nearest-neighbor-sampling':
         handleNearestNeighborSampling();
+        break;
+      case 'request-screen-capture':
+        if (state.modeSlider) {
+          console.log("REQUEST SCREEN CAPTURE: SLIDER MODE");
+          window.ipcRenderer?.handleSelectedImageForScreenshotSlider(cloneDeep(state));
+        }
+        else {
+          console.log("REQUEST SCREEN CAPTURE: OVERLAY MODE");
+          handleSelectImage(1);
+          setTimeout(() => {
+            window.ipcRenderer?.handleSelectedImageForScreenshot(cloneDeep(state));
+          }, 100);
+        }
         break;
     }
   });
