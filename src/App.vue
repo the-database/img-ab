@@ -2,7 +2,6 @@
   import { ref, reactive, computed, onMounted, watch } from 'vue';
   import { cloneDeep } from 'lodash-es';
   import panzoom from './panzoom';
-  //import ImageCompare from "image-compare-viewer";
   import ImageCompare from "./image-compare-viewer";
   import './image-compare-viewer/image-compare-viewer.min.css';
 
@@ -43,44 +42,67 @@
       imageCompareViewerInstance.mount();
       handleModeSlider();
     }
-    
-    newImagePanZoom.ondragstart = function() { return false; }; // TODO ???
 
-    panzoomInstance = panzoom(newImagePanZoom, {
-      bounds: true,
-      boundsPadding: 0.1,
-      zoomDoubleClickSpeed: 1,
-      maxZoom: 50,
-      minZoom: .1,
-      beforeWheel: function(e) {
-        // return true;
-      }
-    });
-  });
+    if (newImagePanZoom) {
+      newImagePanZoom.ondragstart = function() { return false; }; // TODO ???
 
-  watch(hiddenImages, ( newValue, oldValue ) => {
-
-    if (hiddenImages.value) {
-
-      hiddenImages.value.forEach(img => {
-        img.onload = () => {
-          console.log('onload!!!', img)
-          if (img.naturalHeight > maximumImageHeight.value) {
-            maximumImageHeight.value = img.naturalHeight;
-            setTimeout(() => {
-              handleModeFitToHeight();
-            }, 0);
-
-            setTimeout(() => {
-              handleMode100Zoom();
-            }, 0);
-          }
+      panzoomInstance = panzoom(newImagePanZoom, {
+        bounds: true,
+        boundsPadding: 0.1,
+        zoomDoubleClickSpeed: 1,
+        maxZoom: 50,
+        minZoom: .1,
+        beforeWheel: function(e) {
+          // return true;
         }
       });
     }
+  });
+
+  watch(hiddenImages, ( newValue, oldValue ) => {
+    updateMaximumImageHeight();
+
   }, {
     immediate: true,
   });
+
+  watch(() => state.allImages, (newVal, oldVal) => {
+    updateMaximumImageHeight();
+  }, {
+    immediate: true
+  });
+
+  function updateMaximumImageHeight() {
+    setTimeout(() => {
+      if (hiddenImages.value) {
+        maximumImageHeight.value = 0;
+        for (const img of hiddenImages.value) {
+          if (img.complete) {
+            checkSingleImageHeight(img);
+          }
+          else {
+            img.onload = () => {
+              checkSingleImageHeight(img);
+            }
+          }
+        }
+      }
+    }, 100);
+  }
+
+  function checkSingleImageHeight(img) {
+    if (img.naturalHeight > maximumImageHeight.value) {
+      maximumImageHeight.value = img.naturalHeight;
+
+      setTimeout(() => {
+        handleModeFitToHeight();
+      }, 0);
+
+      setTimeout(() => {
+        handleMode100Zoom();
+      }, 0);
+    }
+  }
 
   function handleSelectImage(index) {
     if (index <= state.allImages.length && index > 0) {
@@ -241,6 +263,9 @@
   });
 
   function initImageIndex() {
+
+    state.selectedImageIndex = 0;
+
     if (state.allImages.length < 2) {
       state.selectedOverlayImageIndex = 0;
     }
@@ -272,7 +297,7 @@
         if (args.forScreenshot) {
           setTimeout(() => {
             window.ipcRenderer?.handleSelectedImageForScreenshot(cloneDeep(state));
-          }, 100);
+          }, 1000);
         }
         break;
       case 'show-info':
@@ -329,11 +354,11 @@
 
 <template>
   <main>
-
     <div class="image-container" ref="imageContainer">
       <span class="info" v-show="state.showInfo">
         {{ state.selectedImageIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedImageIndex] }}
       </span>
+      
       <span class="info-right" v-show="state.showInfo && state.modeSlider">
         {{ state.selectedOverlayImageIndex+1 }}/{{ state.allImages.length }}: {{  state.allImages[state.selectedOverlayImageIndex] }}
       </span>
@@ -403,6 +428,14 @@
             <td>s</td>
             <td>Take Screen Capture of All Images</td>
           </tr>
+          <tr>
+            <td>c</td>
+              <td>Clear Comparison</td>
+            </tr>
+            <tr>
+              <td>Esc</td>
+              <td>Exit</td>
+            </tr>
         </tbody>
       </table>
       
@@ -482,6 +515,14 @@
             <tr>
               <td>s</td>
               <td>Take Screen Capture of All Images</td>
+            </tr>
+            <tr>
+              <td>c</td>
+              <td>Clear Comparison</td>
+            </tr>
+            <tr>
+              <td>Esc</td>
+              <td>Exit</td>
             </tr>
           </tbody>
         </table>

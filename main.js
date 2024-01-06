@@ -111,8 +111,10 @@ function handleChangePage(input) {
         win.webContents.send('send-args-replace', getCurrentFilesForFolderMode());
       }
       break;
+    case "c":
+      win.webContents.send('send-args-replace', []);
+      break;
     case "Escape":
-    case "x":
       win.close();
       break;
   }
@@ -287,6 +289,22 @@ ipcMain.on('show-context-menu', (event, state) => {
     });
   });
 
+  template.push(...[
+    { type: 'separator' },
+    {
+      label: 'Clear Comparison (C)',
+      click: () => {
+        event.sender.send('send-args-replace', []);
+      }
+    },
+    {
+      label: 'Exit (Esc)',
+      click: () => {
+        win.close();
+      }
+    }
+  ]);
+
   const menu = Menu.buildFromTemplate(template);
   menu.popup(BrowserWindow.fromWebContents(event.sender));
 });
@@ -313,11 +331,11 @@ ipcMain.on('selected-image-for-screenshot', async (event, state) => {
     fs.writeFile(path.join(screenshotsPath, newCaptureDir, `${state.selectedImageIndex+1}_${path.basename(image)}`),
     img.toPNG(), "base64", function (err) {
       if (err) throw err;
+
+      if (state.selectedImageIndex < state.allImages.length - 1) {
+        event.sender.send('context-menu-command', 'select-image', {index: state.selectedImageIndex + 1, forScreenshot: true});
+      }
     });
-    
-    if (state.selectedImageIndex < state.allImages.length - 1) {
-      event.sender.send('context-menu-command', 'select-image', {index: state.selectedImageIndex + 1, forScreenshot: true});
-    }
   })
   .catch((err) => {
       console.log(err);
