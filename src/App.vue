@@ -258,6 +258,8 @@
         case "s":
           window.ipcRenderer?.handleStartScreenCapture();
           break;
+        case "f":
+          window.ipcRenderer?.toggleFullScreen();
       }
     });
   });
@@ -427,6 +429,10 @@
           <tr>
             <td>s</td>
             <td>Take Screen Capture of All Images</td>
+          </tr>
+          <tr>
+            <td>f</td>
+            <td>Toggle Fullscreen Mode</td>
           </tr>
           <tr>
             <td>c</td>

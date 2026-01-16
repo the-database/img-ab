@@ -400,46 +400,36 @@ export default function createPanZoom(domElement, options) {
     frameAnimation = window.requestAnimationFrame(frame);
   }
 
-  function zoomByRatio(clientX, clientY, ratio) {
-    if (isNaN(clientX) || isNaN(clientY) || isNaN(ratio)) {
-      throw new Error('zoom requires valid numbers');
-    }
-
-    var newScale = transform.scale * ratio;
-
-    if (newScale < minZoom) {
-      if (transform.scale === minZoom) return;
-
-      ratio = minZoom / transform.scale;
-    }
-    if (newScale > maxZoom) {
-      if (transform.scale === maxZoom) return;
-
-      ratio = maxZoom / transform.scale;
-    }
-
-    var size = transformToScreen(clientX, clientY);
-
-    transform.x = size.x - ratio * (size.x - transform.x);
-    transform.y = size.y - ratio * (size.y - transform.y);
-
-    // TODO: https://github.com/anvaka/panzoom/issues/112
-    if (bounds && boundsPadding === 1 && minZoom === 1) {
-      transform.scale *= ratio;
-      keepTransformInsideBounds();
-    } else {
-      console.log("hello?")
-      var transformAdjusted = keepTransformInsideBounds();
-      //if (!transformAdjusted) {
-        console.log("YES!");
-        transform.scale *= ratio;
-      //}
-    }
-
-    triggerEvent('zoom');
-
-    makeDirty();
+function zoomByRatio(clientX, clientY, ratio) {
+  if (isNaN(clientX) || isNaN(clientY) || isNaN(ratio)) {
+    throw new Error('zoom requires valid numbers');
   }
+
+  var newScale = transform.scale * ratio;
+
+  if (newScale < minZoom) {
+    if (transform.scale === minZoom) return;
+    ratio = minZoom / transform.scale;
+  }
+  if (newScale > maxZoom) {
+    if (transform.scale === maxZoom) return;
+    ratio = maxZoom / transform.scale;
+  }
+
+  var size = transformToScreen(clientX, clientY);
+
+  transform.x = size.x - ratio * (size.x - transform.x);
+  transform.y = size.y - ratio * (size.y - transform.y);
+  transform.scale *= ratio;
+
+  // Apply bounds after scale is set, unless bounds are disabled for zoom
+  if (!boundsDisabledForZoom) {
+    keepTransformInsideBounds();
+  }
+
+  triggerEvent('zoom');
+  makeDirty();
+}
 
   function zoomAbs(clientX, clientY, zoomLevel) {
     var ratio = zoomLevel / transform.scale;

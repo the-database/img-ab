@@ -7,6 +7,7 @@ const screenshotsPath = path.join(require('os').homedir(), "Pictures/img-ab");
 
 // run this as early in the main process as possible
 if (require('electron-squirrel-startup')) app.quit();
+Menu.setApplicationMenu(null);
 
 if (!fs.existsSync(screenshotsPath)){
   fs.mkdirSync(screenshotsPath);
@@ -45,7 +46,7 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
-    frame: false,
+    frame: true,
     fullscreen: true
   });
 
@@ -252,6 +253,13 @@ ipcMain.on('show-context-menu', (event, state) => {
       click: () => { event.sender.send('context-menu-command', 'mode-fit-to-height') }
     },
     {
+      label: 'Fullscreen (F)',
+      type: 'checkbox',
+      checked: win.isFullScreen(),
+      click: () => { toggleFullScreen(); }
+    },
+    
+    {
       label: 'Smooth Sampling (Y)',
       type: 'checkbox',
       checked: !state.nearestNeighborSampling,
@@ -316,8 +324,16 @@ function startScreenCapture(event) {
   event.sender.send('context-menu-command', 'request-screen-capture');
 }
 
+function toggleFullScreen() {
+  win.setFullScreen(!win.isFullScreen());
+}
+
 ipcMain.on('start-screen-capture', (event, state) => {
   startScreenCapture(event);
+})
+
+ipcMain.on('toggle-full-screen', () => {
+  toggleFullScreen();
 })
 
 ipcMain.on('selected-image-for-screenshot', async (event, state) => {

@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   handleContextMenuCommand: (command, args) => ipcRenderer.on('context-menu-command', command, args),
   handleSelectedImageForScreenshot: (args) => ipcRenderer.send('selected-image-for-screenshot', args),
   handleSelectedImageForScreenshotSlider: (args) => ipcRenderer.send('selected-image-for-screenshot-slider', args),
-  handleStartScreenCapture: () => ipcRenderer.send('start-screen-capture')
+  handleStartScreenCapture: () => ipcRenderer.send('start-screen-capture'),
+  toggleFullScreen: () => ipcRenderer.send('toggle-full-screen')
 })
 
