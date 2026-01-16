@@ -172,9 +172,16 @@
     imageCompareViewerInstance.toggleSlider();
   }
 
+  function handleCopyCurrentImage() {
+    window.ipcRenderer?.copyCurrentImage(cloneDeep(state));
+  }
+
+  function handleCopyAllImages() {
+    window.ipcRenderer?.copyAllImages(cloneDeep(state));
+  }
+
   onMounted(() => {
 
-    
     window.addEventListener('contextmenu', (e) => {
       e.preventDefault()
       window.ipcRenderer?.handleContextMenu(cloneDeep(state));
@@ -191,9 +198,9 @@
 
       let pathArr = [];
       for (const f of event.dataTransfer.files) {
-          // Using the path attribute to get absolute file path
-          console.log('File Path of dragged files: ', f.path)
-          pathArr.push(f.path); // assemble array for main.js
+        const filePath = window.ipcRenderer?.getPathForFile(f);
+        console.log('File Path of dragged files: ', filePath);
+        pathArr.push(filePath);
       }
       console.log(pathArr);
       const ret = window.ipcRenderer?.handleDragAndDrop(pathArr);
@@ -257,6 +264,12 @@
           break;
         case "s":
           window.ipcRenderer?.handleStartScreenCapture();
+          break;
+        case "D":
+          handleCopyCurrentImage();
+          break;
+        case "d":
+          handleCopyAllImages();
           break;
         case "f":
           window.ipcRenderer?.toggleFullScreen();
@@ -327,6 +340,12 @@
         break;
       case 'nearest-neighbor-sampling':
         handleNearestNeighborSampling();
+        break;
+      case 'copy-current-image':
+        handleCopyCurrentImage();
+        break;
+      case 'copy-all-images':
+        handleCopyAllImages();
         break;
       case 'request-screen-capture':
         if (state.modeSlider) {
@@ -431,6 +450,14 @@
             <td>Take Screen Capture of All Images</td>
           </tr>
           <tr>
+            <td>Shift+d</td>
+            <td>Copy Current Image</td>
+          </tr>
+          <tr>
+            <td>d</td>
+            <td>Copy All Images</td>
+          </tr>
+          <tr>
             <td>f</td>
             <td>Toggle Fullscreen Mode</td>
           </tr>
@@ -521,6 +548,14 @@
             <tr>
               <td>s</td>
               <td>Take Screen Capture of All Images</td>
+            </tr>
+            <tr>
+              <td>d</td>
+              <td>Copy Current Image</td>
+            </tr>
+            <tr>
+              <td>Shift+D</td>
+              <td>Copy All Images</td>
             </tr>
             <tr>
               <td>c</td>

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
   handleArgsReplace: (callback) => ipcRenderer.on('send-args-replace', callback),
@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   handleSelectedImageForScreenshot: (args) => ipcRenderer.send('selected-image-for-screenshot', args),
   handleSelectedImageForScreenshotSlider: (args) => ipcRenderer.send('selected-image-for-screenshot-slider', args),
   handleStartScreenCapture: () => ipcRenderer.send('start-screen-capture'),
-  toggleFullScreen: () => ipcRenderer.send('toggle-full-screen')
+  toggleFullScreen: () => ipcRenderer.send('toggle-full-screen'),
+  copyCurrentImage: (state) => ipcRenderer.send('copy-current-image', state),
+  copyAllImages: (state) => ipcRenderer.send('copy-all-images', state),
+  getPathForFile: (file) => webUtils.getPathForFile(file)
 })
-

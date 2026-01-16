@@ -3,7 +3,8 @@ const path = require("path");
 const fs = require("fs");
 const process = require('process');
 
-const screenshotsPath = path.join(require('os').homedir(), "Pictures/img-ab");
+const screenshotsPath = path.join(require('os').homedir(), "Pictures/img-ab/captures");
+const copiesPath = path.join(require('os').homedir(), "Pictures/img-ab/copies");
 
 // run this as early in the main process as possible
 if (require('electron-squirrel-startup')) app.quit();
@@ -11,6 +12,10 @@ Menu.setApplicationMenu(null);
 
 if (!fs.existsSync(screenshotsPath)){
   fs.mkdirSync(screenshotsPath);
+}
+
+if (!fs.existsSync(copiesPath)){
+  fs.mkdirSync(copiesPath);
 }
 
 let win = null;
@@ -47,9 +52,9 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
     },
     frame: true,
-    fullscreen: true
+    fullscreen: true,
   });
-
+  
   ipcMain.on('drag-and-drop', (event, pathArr) => {
     sendArgs(pathArr);
   });
@@ -208,6 +213,36 @@ app.on("window-all-closed", () => {
 
 app.commandLine.appendSwitch('force-color-profile', 'srgb');
 
+// Helper function to copy an image file to the copies directory
+function copyImageToExportPath(imagePath) {
+  // Get the parent folder name and filename
+  const parentFolder = path.basename(path.dirname(imagePath));
+  const filename = path.basename(imagePath);
+  
+  // Create the destination directory if it doesn't exist
+  const destDir = path.join(copiesPath, parentFolder);
+  if (!fs.existsSync(destDir)) {
+    fs.mkdirSync(destDir, { recursive: true });
+  }
+  
+  // Build destination path
+  const destPath = path.join(destDir, filename);
+  
+  // Check if file already exists, if so add a timestamp to avoid overwriting
+  let finalDestPath = destPath;
+  if (fs.existsSync(destPath)) {
+    const ext = path.extname(filename);
+    const nameWithoutExt = path.basename(filename, ext);
+    finalDestPath = path.join(destDir, `${nameWithoutExt}_${currentDateTimeString()}${ext}`);
+  }
+  
+  // Copy the file
+  fs.copyFileSync(imagePath, finalDestPath);
+  console.log(`Copied: ${imagePath} -> ${finalDestPath}`);
+  
+  return finalDestPath;
+}
+
 // main
 ipcMain.on('show-context-menu', (event, state) => {
   console.log('state', state);
@@ -284,6 +319,14 @@ ipcMain.on('show-context-menu', (event, state) => {
       click: () => {
         startScreenCapture(event);
       }
+    },
+    {
+      label: 'Copy Current Image (Shift+D)',
+      click: () => { event.sender.send('context-menu-command', 'copy-current-image') }
+    },
+    {
+      label: 'Copy All Images (D)',
+      click: () => { event.sender.send('context-menu-command', 'copy-all-images') }
     },
     { type: 'separator' },
   ];
@@ -373,4 +416,58 @@ ipcMain.on('selected-image-for-screenshot-slider', async (event, state) => {
   .catch((err) => {
       console.log(err);
   });
+});
+
+// Copy current image handler
+ipcMain.on('copy-current-image', (event, state) => {
+  const imagePath = state.allImages[state.selectedImageIndex];
+  
+  if (!imagePath) {
+    console.log('No image selected to copy');
+    return;
+  }
+  
+  // Check if it's a local file (not a URL)
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    console.log('Cannot copy remote images');
+    return;
+  }
+  
+  try {
+    const destPath = copyImageToExportPath(imagePath);
+    console.log(`Successfully copied current image to: ${destPath}`);
+  } catch (err) {
+    console.error('Error copying image:', err);
+  }
+});
+
+// Copy all images handler
+ipcMain.on('copy-all-images', (event, state) => {
+  const allImages = state.allImages;
+  
+  if (!allImages || allImages.length === 0) {
+    console.log('No images to copy');
+    return;
+  }
+  
+  let copiedCount = 0;
+  let skippedCount = 0;
+  
+  allImages.forEach((imagePath) => {
+    // Check if it's a local file (not a URL)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      console.log(`Skipping remote image: ${imagePath}`);
+      skippedCount++;
+      return;
+    }
+    
+    try {
+      copyImageToExportPath(imagePath);
+      copiedCount++;
+    } catch (err) {
+      console.error(`Error copying image ${imagePath}:`, err);
+    }
+  });
+  
+  console.log(`Successfully copied ${copiedCount} images (${skippedCount} skipped)`);
 });
