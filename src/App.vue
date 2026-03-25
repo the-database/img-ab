@@ -27,6 +27,7 @@
 
   let panzoomInstance = null;
   let imageCompareViewerInstance = null;
+  let preserveView = false;
 
   const maximumImageHeight = ref(0);
   const maximumImageHeightPx = computed(() => `${maximumImageHeight.value}px`);
@@ -94,13 +95,15 @@
     if (img.naturalHeight > maximumImageHeight.value) {
       maximumImageHeight.value = img.naturalHeight;
 
-      setTimeout(() => {
-        handleModeFitToHeight();
-      }, 0);
+      if (!preserveView) {
+        setTimeout(() => {
+          handleModeFitToHeight();
+        }, 0);
 
-      setTimeout(() => {
-        handleMode100Zoom();
-      }, 0);
+        setTimeout(() => {
+          handleMode100Zoom();
+        }, 0);
+      }
     }
   }
 
@@ -293,7 +296,12 @@
 
   window.ipcRenderer?.handleArgsReplace((event, value) => {
     console.log('handleArgsReplace', value);
-    state.allImages = value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f));
+    const newImages = value.filter(f => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(f));
+    if (state.allImages.length > 0 && newImages.length > 0) {
+      preserveView = true;
+      setTimeout(() => { preserveView = false; }, 200);
+    }
+    state.allImages = newImages;
     initImageIndex();
   });
 
